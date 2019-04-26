@@ -1067,6 +1067,8 @@ Recent Update History
   #include "keyer_features_and_options_test_everything.h"
 #elif defined(HARDWARE_YAACWK)
   #include "keyer_features_and_options_yaacwk.h"
+#elif defined(HARDWARE_MEGAKEYER)
+  #include "keyer_features_and_options_megakeyer.h"
 #elif defined(HARDWARE_TEST)
   #include "keyer_features_and_options_test.h"
 #else
@@ -1113,6 +1115,9 @@ Recent Update History
 #elif defined(HARDWARE_YAACWK)
   #include "keyer_pin_settings_yaacwk.h"
   #include "keyer_settings_yaacwk.h"
+#elif defined(HARDWARE_MEGAKEYER)
+  #include "keyer_pin_settings_megakeyer.h"
+  #include "keyer_settings_megakeyer.h"
 #elif defined(HARDWARE_TEST)
   #include "keyer_pin_settings_test.h"
   #include "keyer_settings_test.h"
