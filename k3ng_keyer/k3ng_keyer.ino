@@ -1363,6 +1363,11 @@ unsigned long last_config_write = 0;
   long button_last_add_to_send_buffer_time = 0;
 #endif //FEATURE_COMMAND_BUTTONS
 
+#ifdef FEATURE_ENCODER_MENU
+  int switch_high_limit;
+  int switch_low_limit;
+#endif //FEATURE_ENCODER_MENU
+
 byte pot_wpm_low_value;
 
 #ifdef FEATURE_POTENTIOMETER
@@ -1950,6 +1955,10 @@ void loop()
       check_paddles();           
       service_dit_dah_buffers();
     #endif //FEATURE_SERIAL
+
+    #if defined(FEATURE_ENCODER_MENU)
+      check_encoder_switch();
+    #endif //FEATURE_ENCODER_MENU
 
     service_send_buffer(PRINTCHAR);
     check_ptt_tail();
@@ -7066,6 +7075,65 @@ void command_mode()
 #endif //FEATURE_COMMAND_BUTTONS
 
 //-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
+void menu_mode()
+{
+  byte stay_in_menu_mode = 1;
+  byte keyer_mode_before = configuration.keyer_mode;
+  keyer_machine_mode = KEYER_MENU_MODE;
+
+  #ifdef DEBUG_MENU_MODE
+    debug_serial_port->println(F("menu_mode: entering"));
+  #endif
+
+  #ifdef OPTION_WATCHDOG_TIMER
+    wdt_disable();
+  #endif //OPTION_WATCHDOG_TIMER
+
+  boop_beep();
+
+  lcd_clear();
+  if (LCD_COLUMNS < 9){
+    lcd_center_print_timed("Menu", 0, default_display_msg_delay);
+  } else {
+    lcd_center_print_timed("Menu", 0, default_display_msg_delay);
+  }
+
+  #if defined(FEATURE_WINKEY_EMULATION) && defined(OPTION_WINKEY_SEND_BREAKIN_STATUS_BYTE)
+    winkey_breakin_status_byte_inhibit = 1;
+  #endif
+
+  while (stay_in_menu_mode) {
+      if (analogswitchpressed() == 1 ){  // did the switch got pressed
+        stay_in_menu_mode = 0;
+        delay(50);
+        while (analogswitchpressed() > 0 ) {}
+      }
+  }
+
+  beep_boop();
+
+  #if defined(FEATURE_WINKEY_EMULATION) && defined(OPTION_WINKEY_SEND_BREAKIN_STATUS_BYTE)
+    winkey_breakin_status_byte_inhibit = 0;
+  #endif
+
+  keyer_machine_mode = KEYER_NORMAL;
+  configuration.keyer_mode = keyer_mode_before;
+
+  lcd_clear(); // cleanup after.
+
+  #if defined(FEATURE_PADDLE_ECHO)
+    paddle_echo_buffer = 0;
+  #endif
+
+  #ifdef OPTION_WATCHDOG_TIMER
+    wdt_enable(WDTO_4S);
+  #endif //OPTION_WATCHDOG_TIMER
+
+}
+#endif //FEATURE_ENCODER_MENU
+//-------------------------------------------------------------------------------------------------------
 #if defined(FEATURE_COMMAND_MODE_PROGRESSIVE_5_CHAR_ECHO_PRACTICE) && defined(FEATURE_COMMAND_BUTTONS)
 void command_progressive_5_char_echo_practice(){
 
@@ -8119,6 +8187,32 @@ byte analogbuttonpressed() {
 #endif //FEATURE_COMMAND_BUTTONS
 
 //------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
+byte analogswitchpressed() {
+
+  int analog_line_read_average = 0;
+  int analog_read_temp = 0;
+
+  for (byte x = 0;x < 19;x++){
+    analog_read_temp = analogRead(encoder_switch_pin);
+    if (analog_read_temp <= switch_high_limit){
+      analog_line_read_average = (analog_line_read_average + analog_read_temp) / 2;
+    }
+  }
+  #ifdef DEBUG_SWITCH
+    debug_serial_port->print(F(" analogswitchpressed: analog_line_read_average: "));
+    debug_serial_port->println(analog_line_read_average);
+  #endif
+
+  if (analog_line_read_average > switch_low_limit && analog_line_read_average <= switch_high_limit) {
+    return 1;
+  }
+  return 0;
+}
+#endif //FEATURE_ENCODER_MENU
+
+//------------------------------------------------------------------
 #ifdef FEATURE_COMMAND_BUTTONS
 byte analogbuttonread(byte button_number) {
  
@@ -8370,7 +8464,34 @@ void check_command_buttons()
   }
 }
 #endif //FEATURE_COMMAND_BUTTONS
+//------------------------------------------------------------------
 
+#ifdef FEATURE_ENCODER_MENU
+void check_encoder_switch() {
+
+  static long last_switch_action = 0;
+  long switch_depress_time;
+
+  #ifdef DEBUG_LOOP
+    debug_serial_port->println(F("loop: entering check_encoder_switch"));
+  #endif
+
+  byte analogswitchtemp = analogswitchpressed();
+  if ((analogswitchtemp == 1) && ((millis() - last_switch_action) > 200)) {
+    switch_depress_time = millis();
+    while ((analogswitchtemp == analogswitchpressed()) && ((millis() - switch_depress_time) < 1000)) {
+      // long hold
+    }
+    if ((millis() - switch_depress_time) < 500) {
+      menu_mode();
+    }
+  }
+  last_switch_action = millis();
+  #ifdef FEATURE_SLEEP
+  last_activity_time = millis();
+  #endif //FEATURE_SLEEP
+}
+#endif //FEATURE_ENCODER_MENU
 //-------------------------------------------------------------------------------------------------------
 
 void service_dit_dah_buffers()
@@ -16600,6 +16721,16 @@ void initialize_rotary_encoder(){
         digitalWrite(rotary_pin2, HIGH);
        #endif 
     #endif //OPTION_ENCODER_ENABLE_PULLUPS
+
+    #ifdef FEATURE_ENCODER_MENU
+      int lower_button_value;
+      int higher_button_value;
+      // switch is wired as a single analog button - can be extended to add other menu buttons
+      lower_button_value = int(button_value_factor * (float(-1 * analog_switch_r2)/float(analog_switch_r1 - analog_switch_r2)));
+      higher_button_value = int(button_value_factor * (float(analog_switch_r2)/float(analog_switch_r2 + analog_switch_r1)));
+      switch_low_limit = (button_value_factor - ((button_value_factor - lower_button_value)/2));
+      switch_high_limit = (button_value_factor + ((higher_button_value - button_value_factor)/2));
+    #endif
   #endif //FEATURE_ROTARY_ENCODER
   
 }
