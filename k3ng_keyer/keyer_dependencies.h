@@ -49,5 +49,5 @@
 #endif
 
 #if defined(FEATURE_ENCODER_MENU)  && (!defined(FEATURE_DISPLAY) || !defined(FEATURE_ROTARY_ENCODER))
-  #error At least one display needs to be configured and the encoder needs to be enabled
+  #error "At least one display needs to be configured and the encoder needs to be enabled"
 #endif

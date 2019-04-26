@@ -2,11 +2,11 @@
 // FEATURES add more bytes to the compiled binary, OPTIONS change code behavior
 
 
-#define FEATURE_COMMAND_BUTTONS
+// #define FEATURE_COMMAND_BUTTONS
 #define FEATURE_COMMAND_LINE_INTERFACE  // Command Line Interface functionality
 #define FEATURE_MEMORIES             // on the Arduino Due, you must have FEATURE_EEPROM_E24C1024 and E24C1024 EEPROM hardware in order to compile this
 // #define FEATURE_MEMORY_MACROS
-#define FEATURE_WINKEY_EMULATION    // disabling Automatic Software Reset is highly recommended (see documentation)
+// #define FEATURE_WINKEY_EMULATION    // disabling Automatic Software Reset is highly recommended (see documentation)
 // #define FEATURE_BEACON
 #define FEATURE_TRAINING_COMMAND_LINE_INTERFACE
 // #define FEATURE_POTENTIOMETER         // do not enable unless you have a potentiometer connected, otherwise noise will falsely trigger wpm changes
@@ -32,6 +32,7 @@
 // #define FEATURE_CW_DECODER
 // #define FEATURE_SLEEP                   // go to sleep after x minutes to conserve battery power (not compatible with Arduino DUE, may have mixed results with Mega and Mega ADK)
 #define FEATURE_ROTARY_ENCODER          // rotary encoder speed control
+#define FEATURE_ENCODER_MENU            // encoder driven menu system
 #define FEATURE_CMOS_SUPER_KEYER_IAMBIC_B_TIMING
 // #define FEATURE_USB_MOUSE               // Uncomment three lines in k3ng_keyer.ino (search for note_usb_uncomment_lines)
 // #define FEATURE_CAPACITIVE_PADDLE_PINS  // remove the bypass capacitors on the paddle_left and paddle_right lines when using capactive paddles

@@ -8193,20 +8193,26 @@ byte analogswitchpressed() {
 
   int analog_line_read_average = 0;
   int analog_read_temp = 0;
-
-  for (byte x = 0;x < 19;x++){
-    analog_read_temp = analogRead(encoder_switch_pin);
-    if (analog_read_temp <= switch_high_limit){
-      analog_line_read_average = (analog_line_read_average + analog_read_temp) / 2;
+  if (analogRead(encoder_switch_pin) <= switch_high_limit) {
+    
+    for (byte x = 0;x < 19;x++){
+      analog_read_temp = analogRead(encoder_switch_pin);
+      if (analog_read_temp <= switch_high_limit){
+        analog_line_read_average = (analog_line_read_average + analog_read_temp) / 2;
+      }
     }
-  }
-  #ifdef DEBUG_SWITCH
-    debug_serial_port->print(F(" analogswitchpressed: analog_line_read_average: "));
-    debug_serial_port->println(analog_line_read_average);
-  #endif
+    #ifdef DEBUG_SWITCH
+      debug_serial_port->print(F(" analogswitchpressed: analog_line_read_average: "));
+      debug_serial_port->println(analog_line_read_average);
+      debug_serial_port->print(F(" analogswitchpressed: switch_low_limit: "));
+      debug_serial_port->println(switch_low_limit);
+      debug_serial_port->print(F(" analogswitchpressed: switch_high_limit: "));
+      debug_serial_port->println(switch_high_limit);
+    #endif
 
-  if (analog_line_read_average > switch_low_limit && analog_line_read_average <= switch_high_limit) {
-    return 1;
+    if (analog_line_read_average > switch_low_limit && analog_line_read_average <= switch_high_limit) {
+      return 1;
+    }
   }
   return 0;
 }
@@ -8477,7 +8483,8 @@ void check_encoder_switch() {
   #endif
 
   byte analogswitchtemp = analogswitchpressed();
-  if ((analogswitchtemp == 1) && ((millis() - last_switch_action) > 200)) {
+  if ((analogswitchtemp > 0) && ((millis() - last_switch_action) > 200)) {
+
     switch_depress_time = millis();
     while ((analogswitchtemp == analogswitchpressed()) && ((millis() - switch_depress_time) < 1000)) {
       // long hold
@@ -8485,8 +8492,8 @@ void check_encoder_switch() {
     if ((millis() - switch_depress_time) < 500) {
       menu_mode();
     }
+    last_switch_action = millis();
   }
-  last_switch_action = millis();
   #ifdef FEATURE_SLEEP
   last_activity_time = millis();
   #endif //FEATURE_SLEEP
@@ -16728,8 +16735,8 @@ void initialize_rotary_encoder(){
       // switch is wired as a single analog button - can be extended to add other menu buttons
       lower_button_value = int(button_value_factor * (float(-1 * analog_switch_r2)/float(analog_switch_r1 - analog_switch_r2)));
       higher_button_value = int(button_value_factor * (float(analog_switch_r2)/float(analog_switch_r2 + analog_switch_r1)));
-      switch_low_limit = (button_value_factor - ((button_value_factor - lower_button_value)/2));
-      switch_high_limit = (button_value_factor + ((higher_button_value - button_value_factor)/2));
+      switch_low_limit = (lower_button_value/2);
+      switch_high_limit = (higher_button_value/2);
     #endif
   #endif //FEATURE_ROTARY_ENCODER
   
@@ -21104,4 +21111,3 @@ void update_time(){
 #endif // FEATURE_CLOCK
 // --------------------------------------------------------------   
 */
-
