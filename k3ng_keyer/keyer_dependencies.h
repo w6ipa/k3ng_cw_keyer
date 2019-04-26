@@ -47,3 +47,7 @@
 #if defined(FEATURE_SINEWAVE_SIDETONE_USING_TIMER_1) || defined(FEATURE_SINEWAVE_SIDETONE_USING_TIMER_3)
   #define FEATURE_SINEWAVE_SIDETONE
 #endif
+
+#if defined(FEATURE_ENCODER_MENU)  && (!defined(FEATURE_DISPLAY) || !defined(FEATURE_ROTARY_ENCODER))
+  #error At least one display needs to be configured and the encoder needs to be enabled
+#endif

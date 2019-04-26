@@ -26,6 +26,10 @@
   #define command_mode_active_led 0
 #endif //FEATURE_COMMAND_BUTTONS
 
+#ifdef FEATURE_ENCODER_MENU
+  #define encoder_switch_pin A1
+#endif //FEATURE_ENCODER_MENU
+
 /*
 FEATURE_SIDETONE_SWITCH
   Enabling this feature and an external toggle switch  adds switch control for playing cw sidetone.
