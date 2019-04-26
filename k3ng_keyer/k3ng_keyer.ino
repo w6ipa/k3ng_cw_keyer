@@ -1357,6 +1357,7 @@ unsigned long last_config_write = 0;
 #ifdef FEATURE_ENCODER_MENU
   int switch_high_limit;
   int switch_low_limit;
+  #include "keyer_menu_en.h"
 #endif //FEATURE_ENCODER_MENU
 
 byte pot_wpm_low_value;
