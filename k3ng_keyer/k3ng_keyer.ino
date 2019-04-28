@@ -4712,18 +4712,17 @@ void debug_capture_dump()
 
 }
 #endif
-
 //-------------------------------------------------------------------------------------------------------
 #ifdef FEATURE_ROTARY_ENCODER
-void check_rotary_encoder(){
+byte chk_rotary_encoder(){
 
   static unsigned long timestamp[5];
 
   unsigned char pinstate = (digitalRead(rotary_pin2) << 1) | digitalRead(rotary_pin1);
   state = ttable[state & 0xf][pinstate];
   unsigned char result = (state & 0x30);
-      
-  if (result) {                                    // If rotary encoder modified  
+
+  if (result) {
     timestamp[0] = timestamp[1];                    // Encoder step timer
     timestamp[1] = timestamp[2]; 
     timestamp[2] = timestamp[3]; 
@@ -4733,12 +4732,24 @@ void check_rotary_encoder(){
     unsigned long elapsed_time = (timestamp[4] - timestamp[0]); // Encoder step time difference for 10's step
  
     if (result == DIR_CW) {                      
-      if (elapsed_time < 250) {speed_change(2);} else {speed_change(1);};
+      if (elapsed_time < 250) {return 2;} else {return 1;};
     }
     if (result == DIR_CCW) {                      
-      if (elapsed_time < 250) {speed_change(-2);} else {speed_change(-1);};
+      if (elapsed_time < 250) {return -2;} else {return -1;};
     }
-    
+  }
+  return 0;
+}
+#endif // FEATURE_ROTARY_ENCODER
+
+//-------------------------------------------------------------------------------------------------------
+#ifdef FEATURE_ROTARY_ENCODER
+void check_rotary_encoder(){
+
+  byte step = chk_rotary_encoder()
+
+  if (step != 0) {
+    speed_change(step);
     // Start of Winkey Speed change mod for Rotary Encoder -- VE2EVN
     #ifdef FEATURE_WINKEY_EMULATION
       if ((primary_serial_port_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
@@ -4748,9 +4759,7 @@ void check_rotary_encoder(){
     #endif    
     // End of Winkey Speed change mod for Rotary Encoder -- VE2EVN
 
-  } // if (result)
-
-  
+  } 
   
 }
 #endif //FEATURE_ROTARY_ENCODER
@@ -7069,6 +7078,9 @@ void menu_mode()
 {
   byte stay_in_menu_mode = 1;
   byte keyer_mode_before = configuration.keyer_mode;
+  byte step = 0;
+  byte menu_level = 0;
+  byte menu_state = 0;
   keyer_machine_mode = KEYER_MENU_MODE;
 
   #ifdef DEBUG_MENU_MODE
@@ -7087,17 +7099,32 @@ void menu_mode()
   } else {
     lcd_center_print_timed("Menu", 0, default_display_msg_delay);
   }
+  
+  lcd_center_print_timed(root_menu.label, 1, default_display_msg_delay);
 
   #if defined(FEATURE_WINKEY_EMULATION) && defined(OPTION_WINKEY_SEND_BREAKIN_STATUS_BYTE)
     winkey_breakin_status_byte_inhibit = 1;
   #endif
 
   while (stay_in_menu_mode) {
+      step = chk_rotary_encoder();
+      if (step > 0) {
+        lcd_center_print_timed("CW", 1, default_display_msg_delay);
+      }
+      if (step < 0) {
+        lcd_center_print_timed("CCW", 1, default_display_msg_delay);
+      }
+
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
-        stay_in_menu_mode = 0;
+        if ((menu_level = 0) && (menu_state = 0xff)) {
+          stay_in_menu_mode = 0;
+          x = 
+        }
         delay(50);
         while (analogswitchpressed() > 0 ) {}
       }
+
+
   }
 
   beep_boop();
@@ -7118,6 +7145,10 @@ void menu_mode()
   #ifdef OPTION_WATCHDOG_TIMER
     wdt_enable(WDTO_4S);
   #endif //OPTION_WATCHDOG_TIMER
+
+  #ifdef DEBUG_MENU_MODE
+    debug_serial_port->println(F("menu_mode: exiting"));
+  #endif
 
 }
 #endif //FEATURE_ENCODER_MENU
