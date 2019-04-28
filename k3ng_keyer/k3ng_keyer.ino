@@ -1850,7 +1850,7 @@ void setup()
   check_for_debug_modes();
   initialize_analog_button_array();
   initialize_serial_ports();
-
+  initialize_menu();
   // #if defined(FEATURE_SINEWAVE_SIDETONE)  // UNDER DEVELOPMENT
   //   initialize_tonsin();
   // #endif  
@@ -7041,14 +7041,48 @@ void command_mode()
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_back() {
+  return 1;
+}
+#endif //FEATURE_ENCODER_MENU
+//-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_noop() {
+  return 0;
+}
+#endif //FEATURE_ENCODER_MENU
+
+//-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_mode() {
+  return 0;
+}
+#endif //FEATURE_ENCODER_MENU
+
+//-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_alphabet_practice() {
+  return 0;
+}
+#endif //FEATURE_ENCODER_MENU
+//-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
 void menu_mode()
 {
   byte stay_in_menu_mode = 1;
   byte keyer_mode_before = configuration.keyer_mode;
   byte step = 0;
-  byte menu_level = 0;
-  byte menu_state = 0;
-  char line[40];
+  byte current_submenu = 0;
+  menu_item *current_menu = &menu_l0;
+  char line0[16];
+  char line1[16];
+  bool refresh = false;
+  int ret_code;
+
   keyer_machine_mode = KEYER_MENU_MODE;
 
   #ifdef DEBUG_MENU_MODE
@@ -7068,16 +7102,17 @@ void menu_mode()
     lcd_center_print_timed("Menu", 0, default_display_msg_delay);
   }
 
-  strcpy_P(line, (char *)pgm_read_word(&(root_menu[0].label)));  
-
-  lcd_center_print_timed(line, 1, default_display_msg_delay);
-
-
   #if defined(FEATURE_WINKEY_EMULATION) && defined(OPTION_WINKEY_SEND_BREAKIN_STATUS_BYTE)
     winkey_breakin_status_byte_inhibit = 1;
   #endif
 
   while (stay_in_menu_mode) {
+      if (refresh) {
+        strcpy_P(line0, (char *)pgm_read_word(&(current_menu->label)));
+        lcd_center_print_timed(line0, 0, default_display_msg_delay);
+        strcpy_P(line1, (char *)pgm_read_word(&(current_menu->submenu[current_submenu]->label)));
+        lcd_center_print_timed(line1, 1, default_display_msg_delay);
+      }
       step = chk_rotary_encoder();
       if (step > 0) {
         lcd_center_print_timed("CW", 1, default_display_msg_delay);
@@ -7087,8 +7122,20 @@ void menu_mode()
       }
 
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
-        if ((menu_level = 0) && (menu_state = 0xff)) {
-          stay_in_menu_mode = 0;
+        if (current_menu->command != NULL) {
+          ret_code = (current_menu->command)();
+          if (ret_code == 1) {
+            if (current_menu->previous_menu == NULL){
+              stay_in_menu_mode = 0;
+            } else {
+              current_menu = current_menu->previous_menu;
+            }
+          }
+        }
+        if (current_menu->item_count > 0) {
+          menu_item *new_menu = current_menu->submenu[current_submenu];
+          new_menu->previous_menu = current_menu;
+          current_menu = new_menu;
         }
         delay(50);
         while (analogswitchpressed() > 0 ) {}
@@ -17089,7 +17136,31 @@ void initialize_display(){
 
   }
 }
+//--------------------------------------------------------------------- 
 
+void initialize_menu(){
+
+  #ifdef FEATURE_ENCODER_MENU
+  
+  menu_l1[0].command = menu_cmd_noop;
+  //menu_l1[0].previous_menu = &menu_l0;
+  menu_l1[1].command = menu_cmd_back;
+  //menu_l1[1].previous_menu = &menu_l0;
+
+  setting_menu[0].command = menu_cmd_mode;
+  //setting_menu[0].previous_menu =&menu_l1[0];
+  setting_menu[1].command = menu_cmd_back;
+  //setting_menu[1].previous_menu =&menu_l1[0];
+  
+  training_menu[0].command = menu_cmd_alphabet_practice;
+  //training_menu[0].previous_menu = &menu_l1[0];
+  training_menu[1].command = menu_cmd_noop;
+  //training_menu[1].previous_menu = &menu_l1[0];
+  training_menu[2].command = menu_cmd_back;
+  //training_menu[2].previous_menu = &menu_l1[0];
+
+  #endif // FEATURE_ENCODER_MENU
+}
 //-------------------------------------------------------------------------------------------------------
 #if defined(OPTION_BLINK_HI_ON_PTT) || (defined(OPTION_WINKEY_BLINK_PTT_ON_HOST_OPEN) && defined(FEATURE_WINKEY_EMULATION))
 void blink_ptt_dits_and_dahs(char const * cw_to_send){
