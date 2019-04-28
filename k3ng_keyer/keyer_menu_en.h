@@ -1,6 +1,6 @@
 #define MAX_MENUS 4
 typedef struct menu_item {
-  char *label[];
+  const char *const label;
   const struct menu_item *submenu[MAX_MENUS];
   void (*command)();
 };
@@ -19,21 +19,22 @@ const char menu_level_002[] PROGMEM = " Exit";
 const char menu_level_011[] PROGMEM = " Alphabet";
 const char menu_level_012[] PROGMEM = " 5 Letters Interactive"; 
 
-const menu_item setting_menu[2] {
-  {menu_level_001, NULL},
-  {menu_level_002, NULL},
+
+const menu_item setting_menu[2] = {
+  {menu_level_001, NULL, NULL},
+  {menu_level_002, NULL, NULL},
 };
 
-const menu_item training_menu[2] {
-  {menu_level_011, NULL},
-  {menu_level_012, NULL},
+const menu_item training_menu[2] = {
+  {menu_level_011, NULL, NULL},
+  {menu_level_012, NULL, NULL},
 };
 
 
-const menu_tem root_menu[4] {
+const menu_item root_menu[4] = {
   {menu_level_00, setting_menu, NULL},
   {menu_level_01, training_menu, NULL},
-  {menu_level_02, NULL},
-  {menu_level_03, NULL}
+  {menu_level_02, NULL, NULL},
+  {menu_level_03, NULL, NULL}
 };
 

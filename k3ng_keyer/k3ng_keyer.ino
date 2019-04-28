@@ -4713,7 +4713,7 @@ byte chk_rotary_encoder(){
 #ifdef FEATURE_ROTARY_ENCODER
 void check_rotary_encoder(){
 
-  byte step = chk_rotary_encoder()
+  byte step = chk_rotary_encoder();
 
   if (step != 0) {
     speed_change(step);
@@ -7048,6 +7048,7 @@ void menu_mode()
   byte step = 0;
   byte menu_level = 0;
   byte menu_state = 0;
+  char line[40];
   keyer_machine_mode = KEYER_MENU_MODE;
 
   #ifdef DEBUG_MENU_MODE
@@ -7066,8 +7067,11 @@ void menu_mode()
   } else {
     lcd_center_print_timed("Menu", 0, default_display_msg_delay);
   }
-  
-  lcd_center_print_timed(root_menu.label, 1, default_display_msg_delay);
+
+  strcpy_P(line, (char *)pgm_read_word(&(root_menu[0].label)));  
+
+  lcd_center_print_timed(line, 1, default_display_msg_delay);
+
 
   #if defined(FEATURE_WINKEY_EMULATION) && defined(OPTION_WINKEY_SEND_BREAKIN_STATUS_BYTE)
     winkey_breakin_status_byte_inhibit = 1;
@@ -7085,7 +7089,6 @@ void menu_mode()
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
         if ((menu_level = 0) && (menu_state = 0xff)) {
           stay_in_menu_mode = 0;
-          x = 
         }
         delay(50);
         while (analogswitchpressed() > 0 ) {}
