@@ -73,7 +73,9 @@
   #define analog_buttons_r1 10
   #define analog_buttons_r2 1
 #endif
-
+#ifdef FEATURE_LCD_MATHERTEL_PCF8574
+  #define WIRECLOCK 400000 // PCF8574 has a max clock of 400kHz in some models 
+#endif
 
 #if defined(FEATURE_COMMAND_BUTTONS) &&  !defined(FEATURE_PS2_KEYBOARD) && !defined(FEATURE_USB_KEYBOARD) && !defined(FEATURE_COMMAND_LINE_INTERFACE) && !defined(FEATURE_WINKEY_EMULATION)
   #define number_of_memories byte(analog_buttons_number_of_buttons-1)
