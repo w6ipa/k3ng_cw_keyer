@@ -66,8 +66,8 @@ FEATURE_SIDETONE_SWITCH
 
 //ps2 keyboard pins
 #ifdef FEATURE_PS2_KEYBOARD
-  #define ps2_keyboard_data A3
-  #define ps2_keyboard_clock 3    // this must be on an interrupt capable pin!
+  #define ps2_keyboard_data 16
+  #define ps2_keyboard_clock 18    // this must be on an interrupt capable pin!
 #endif //FEATURE_PS2_KEYBOARD
 
 // rotary encoder pins and options - rotary encoder code from Jim Balls M0CKE
