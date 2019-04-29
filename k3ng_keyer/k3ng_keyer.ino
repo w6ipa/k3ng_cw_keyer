@@ -1596,6 +1596,10 @@ byte send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
 #endif  
 
 #if defined(FEATURE_LCD_MATHERTEL_PCF8574)
+  #if (ARDUINO > 10507) && defined(WIRECLOCK)
+    // equivalent to setting TWI_FREQ.
+    Wire.setClock(WIRECLOCK);
+  #endif
   LiquidCrystal_PCF8574 lcd(lcd_i2c_address_mathertel_PCF8574);
 #endif
 
