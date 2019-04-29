@@ -1,5 +1,8 @@
-// Initial and hardcoded settings
-#define initial_speed_wpm 26             // "factory default" keyer speed setting
+//
+//       Initial setting for W6IPA megakeyer v1.1 (CC) BY-NC-SA
+//       Project files are available here https://github.com/w6ipa/megakeyer
+//
+#define initial_speed_wpm 20             // "factory default" keyer speed setting
 #define initial_command_mode_speed_wpm 20 // "factory default" command mode speed setting 
 #define initial_sidetone_freq 600        // "factory default" sidetone frequency setting
 #define hz_high_beep 1500                // frequency in hertz of high beep
@@ -40,7 +43,7 @@
 #define default_memory_repeat_time 3000  // time in milliseconds
 #define LCD_COLUMNS 16
 #define LCD_ROWS 2
-#define lcd_i2c_address 0x27
+#define lcd_i2c_address_mathertel_PCF8574 0x27
 #define hell_pixel_microseconds 4025
 #define program_memory_limit_consec_spaces 1
 #define serial_leading_zeros 1            // set to 1 to activate leading zeros in serial numbers (i.e. #1 = 001)

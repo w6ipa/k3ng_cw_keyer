@@ -1,4 +1,9 @@
-/* Pins - you must review these and configure ! */
+//
+//       Pin setting for W6IPA megakeyer v1.1 (CC) BY-NC-SA
+//       Project files are available here https://github.com/w6ipa/megakeyer
+//
+
+
 #ifndef keyer_pin_settings_h
 #define keyer_pin_settings_h
 

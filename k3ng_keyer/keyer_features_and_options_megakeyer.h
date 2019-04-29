@@ -1,4 +1,8 @@
-// compile time features and options - comment or uncomment to add or delete features
+//
+//       Features for W6IPA megakeyer v1.1 (CC) BY-NC-SA
+//       Project files are available here https://github.com/w6ipa/megakeyer
+//
+
 // FEATURES add more bytes to the compiled binary, OPTIONS change code behavior
 
 
