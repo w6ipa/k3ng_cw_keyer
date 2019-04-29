@@ -71,6 +71,9 @@
   #define analog_buttons_r2 1
 #endif
 
+#ifdef FEATURE_LCD_MATHERTEL_PCF8574
+  #define WIRECLOCK 400000
+#endif
 
 #if defined(FEATURE_COMMAND_BUTTONS) &&  !defined(FEATURE_PS2_KEYBOARD) && !defined(FEATURE_USB_KEYBOARD) && !defined(FEATURE_COMMAND_LINE_INTERFACE) && !defined(FEATURE_WINKEY_EMULATION)
   #define number_of_memories byte(analog_buttons_number_of_buttons-1)
