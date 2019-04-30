@@ -54,11 +54,8 @@
 // #define DEBUG_SD_CARD
 // #define DEBUG_FARNSWORTH
 // #define DEBUG_FARNSWORTH_TIMING
-<<<<<<< HEAD
 #define DEBUG_MENU_MODE
 #define DEBUG_SWITCH
-=======
 // #define DEBUG_ASYNC_EEPROM_WRITE
->>>>>>> master
 
 // #define OPTION_WINKEY_IGNORE_FIRST_STATUS_REQUEST

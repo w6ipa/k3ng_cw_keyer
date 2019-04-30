@@ -40,7 +40,7 @@
 #define default_memory_repeat_time 3000  // time in milliseconds
 #define LCD_COLUMNS 16
 #define LCD_ROWS 2
-#define lcd_i2c_address 0x27
+#define lcd_i2c_address_mathertel_PCF8574 0x27
 #define hell_pixel_microseconds 4025
 #define program_memory_limit_consec_spaces 1
 #define serial_leading_zeros 1            // set to 1 to activate leading zeros in serial numbers (i.e. #1 = 001)
@@ -63,6 +63,7 @@
 #define default_wordsworth_wordspace 6
 #define default_wordsworth_repetition 1
 #define serial_program_memory_buffer_size 500
+#define eeprom_write_time_ms 3000
 
 #ifdef FEATURE_COMMAND_BUTTONS
   #define analog_buttons_number_of_buttons 4  // includes the command button (command button + 3 memory buttons = 4)
