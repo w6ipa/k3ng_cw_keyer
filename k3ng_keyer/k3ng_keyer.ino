@@ -4689,7 +4689,7 @@ void debug_capture_dump()
 #endif
 //-------------------------------------------------------------------------------------------------------
 #ifdef FEATURE_ROTARY_ENCODER
-byte chk_rotary_encoder(){
+int chk_rotary_encoder(){
 
   static unsigned long timestamp[5];
 
@@ -4706,10 +4706,10 @@ byte chk_rotary_encoder(){
     
     unsigned long elapsed_time = (timestamp[4] - timestamp[0]); // Encoder step time difference for 10's step
  
-    if (result == DIR_CW) {                      
+    if (result == DIR_CW) {
       if (elapsed_time < 250) {return 2;} else {return 1;};
     }
-    if (result == DIR_CCW) {                      
+    if (result == DIR_CCW) {
       if (elapsed_time < 250) {return -2;} else {return -1;};
     }
   }
@@ -4721,7 +4721,7 @@ byte chk_rotary_encoder(){
 #ifdef FEATURE_ROTARY_ENCODER
 void check_rotary_encoder(){
 
-  byte step = chk_rotary_encoder();
+  int step = chk_rotary_encoder();
 
   if (step != 0) {
     speed_change(step);
@@ -7134,6 +7134,15 @@ byte menu_cmd_mode() {
 }
 #endif //FEATURE_ENCODER_MENU
 
+#ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_revert() {
+  if (configuration.paddle_mode == PADDLE_NORMAL) {
+    configuration.paddle_mode = PADDLE_REVERSE;
+
+  return 0;
+}
+#endif //FEATURE_ENCODER_MENU
+
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_ENCODER_MENU
@@ -7148,12 +7157,12 @@ void menu_mode()
 {
   byte stay_in_menu_mode = 1;
   byte keyer_mode_before = configuration.keyer_mode;
-  byte step = 0;
-  byte current_submenu = 0;
+  int step = 0;
+  int current_submenu = 0;
   menu_item *current_menu = &menu_l0;
   char line0[16];
   char line1[16];
-  bool refresh = false;
+  bool refresh = true;
   int ret_code;
 
   keyer_machine_mode = KEYER_MENU_MODE;
@@ -7169,11 +7178,6 @@ void menu_mode()
   boop_beep();
 
   lcd_clear();
-  if (LCD_COLUMNS < 9){
-    lcd_center_print_timed("Menu", 0, default_display_msg_delay);
-  } else {
-    lcd_center_print_timed("Menu", 0, default_display_msg_delay);
-  }
 
   #if defined(FEATURE_WINKEY_EMULATION) && defined(OPTION_WINKEY_SEND_BREAKIN_STATUS_BYTE)
     winkey_breakin_status_byte_inhibit = 1;
@@ -7181,22 +7185,33 @@ void menu_mode()
 
   while (stay_in_menu_mode) {
       if (refresh) {
-        strcpy_P(line0, (char *)pgm_read_word(&(current_menu->label)));
+        strcpy_P(line0, (char *)pgm_read_word(&(menu_labels[current_menu->label_index])));
         lcd_center_print_timed(line0, 0, default_display_msg_delay);
-        strcpy_P(line1, (char *)pgm_read_word(&(current_menu->submenu[current_submenu]->label)));
+        strcpy_P(line1, (char *)pgm_read_word(&(menu_labels[current_menu->submenu[current_submenu].label_index])));
         lcd_center_print_timed(line1, 1, default_display_msg_delay);
+        refresh = false;
       }
       step = chk_rotary_encoder();
       if (step > 0) {
-        lcd_center_print_timed("CW", 1, default_display_msg_delay);
+        if (current_submenu < current_menu->item_count - 1) {
+          current_submenu ++;
+        } else {
+          current_submenu = 0;
+        }
+        refresh = true;
       }
       if (step < 0) {
-        lcd_center_print_timed("CCW", 1, default_display_msg_delay);
+        if (current_submenu > 0) {
+          current_submenu --;
+        }else {
+          current_submenu = current_menu->item_count -1;
+        }
+        refresh = true;
       }
 
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
-        if (current_menu->command != NULL) {
-          ret_code = (current_menu->command)();
+        if (current_menu->submenu[current_submenu].command != NULL) {
+          ret_code = (current_menu->submenu[current_submenu].command)();
           if (ret_code == 1) {
             if (current_menu->previous_menu == NULL){
               stay_in_menu_mode = 0;
@@ -7204,14 +7219,16 @@ void menu_mode()
               current_menu = current_menu->previous_menu;
             }
           }
-        }
-        if (current_menu->item_count > 0) {
-          menu_item *new_menu = current_menu->submenu[current_submenu];
-          new_menu->previous_menu = current_menu;
-          current_menu = new_menu;
+        } else {
+          if (current_menu->item_count > 0) {
+            menu_item *new_menu = &current_menu->submenu[current_submenu];
+            new_menu->previous_menu = current_menu;
+            current_menu = new_menu;
+          }
         }
         delay(50);
         while (analogswitchpressed() > 0 ) {}
+        refresh = true;
       }
 
 
@@ -8302,20 +8319,26 @@ byte analogswitchpressed() {
 
   int analog_line_read_average = 0;
   int analog_read_temp = 0;
-
-  for (byte x = 0;x < 19;x++){
-    analog_read_temp = analogRead(encoder_switch_pin);
-    if (analog_read_temp <= switch_high_limit){
-      analog_line_read_average = (analog_line_read_average + analog_read_temp) / 2;
+  if (analogRead(encoder_switch_pin) <= switch_high_limit) {
+    
+    for (byte x = 0;x < 19;x++){
+      analog_read_temp = analogRead(encoder_switch_pin);
+      if (analog_read_temp <= switch_high_limit){
+        analog_line_read_average = (analog_line_read_average + analog_read_temp) / 2;
+      }
     }
-  }
-  #ifdef DEBUG_SWITCH
-    debug_serial_port->print(F(" analogswitchpressed: analog_line_read_average: "));
-    debug_serial_port->println(analog_line_read_average);
-  #endif
+    #ifdef DEBUG_SWITCH
+      debug_serial_port->print(F(" analogswitchpressed: analog_line_read_average: "));
+      debug_serial_port->println(analog_line_read_average);
+      debug_serial_port->print(F(" analogswitchpressed: switch_low_limit: "));
+      debug_serial_port->println(switch_low_limit);
+      debug_serial_port->print(F(" analogswitchpressed: switch_high_limit: "));
+      debug_serial_port->println(switch_high_limit);
+    #endif
 
-  if (analog_line_read_average > switch_low_limit && analog_line_read_average <= switch_high_limit) {
-    return 1;
+    if (analog_line_read_average > switch_low_limit && analog_line_read_average <= switch_high_limit) {
+      return 1;
+    }
   }
   return 0;
 }
@@ -8586,7 +8609,7 @@ void check_encoder_switch() {
   #endif
 
   byte analogswitchtemp = analogswitchpressed();
-  if ((analogswitchtemp == 1) && ((millis() - last_switch_action) > 200)) {
+  if ((analogswitchtemp > 0) && ((millis() - last_switch_action) > 200)) {
     switch_depress_time = millis();
     while ((analogswitchtemp == analogswitchpressed()) && ((millis() - switch_depress_time) < 1000)) {
       // long hold
@@ -8594,8 +8617,8 @@ void check_encoder_switch() {
     if ((millis() - switch_depress_time) < 500) {
       menu_mode();
     }
+    last_switch_action = millis();
   }
-  last_switch_action = millis();
   #ifdef FEATURE_SLEEP
   last_activity_time = millis();
   #endif //FEATURE_SLEEP
@@ -16858,8 +16881,8 @@ void initialize_rotary_encoder(){
       // switch is wired as a single analog button - can be extended to add other menu buttons
       lower_button_value = int(button_value_factor * (float(-1 * analog_switch_r2)/float(analog_switch_r1 - analog_switch_r2)));
       higher_button_value = int(button_value_factor * (float(analog_switch_r2)/float(analog_switch_r2 + analog_switch_r1)));
-      switch_low_limit = (button_value_factor - ((button_value_factor - lower_button_value)/2));
-      switch_high_limit = (button_value_factor + ((higher_button_value - button_value_factor)/2));
+      switch_low_limit = (lower_button_value/2);
+      switch_high_limit = (higher_button_value/2);
     #endif
   #endif //FEATURE_ROTARY_ENCODER
   
@@ -17214,22 +17237,18 @@ void initialize_menu(){
 
   #ifdef FEATURE_ENCODER_MENU
   
-  menu_l1[0].command = menu_cmd_noop;
-  //menu_l1[0].previous_menu = &menu_l0;
-  menu_l1[1].command = menu_cmd_back;
-  //menu_l1[1].previous_menu = &menu_l0;
+  menu_l1[0].command = NULL;
+  menu_l1[1].command = NULL;
+  menu_l1[2].command = menu_cmd_noop;
+  menu_l1[3].command = menu_cmd_back;
 
   setting_menu[0].command = menu_cmd_mode;
-  //setting_menu[0].previous_menu =&menu_l1[0];
-  setting_menu[1].command = menu_cmd_back;
-  //setting_menu[1].previous_menu =&menu_l1[0];
+  setting_menu[1].command = menu_cmd_revert;
+  setting_menu[2].command = menu_cmd_back;
   
   training_menu[0].command = menu_cmd_alphabet_practice;
-  //training_menu[0].previous_menu = &menu_l1[0];
   training_menu[1].command = menu_cmd_noop;
-  //training_menu[1].previous_menu = &menu_l1[0];
   training_menu[2].command = menu_cmd_back;
-  //training_menu[2].previous_menu = &menu_l1[0];
 
   #endif // FEATURE_ENCODER_MENU
 }
