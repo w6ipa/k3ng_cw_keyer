@@ -7121,6 +7121,7 @@ void command_mode()
 
 #ifdef FEATURE_ENCODER_MENU
 byte menu_cmd_back() {
+  Serial.println("menu_cmd_back");
   return 1;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -7128,6 +7129,7 @@ byte menu_cmd_back() {
 
 #ifdef FEATURE_ENCODER_MENU
 byte menu_cmd_noop() {
+  Serial.println("menu_cmd_noop");
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -7136,6 +7138,7 @@ byte menu_cmd_noop() {
 
 #ifdef FEATURE_ENCODER_MENU
 byte menu_cmd_mode() {
+  Serial.println("menu_cmd_mode");
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -7144,6 +7147,7 @@ byte menu_cmd_mode() {
 
 #ifdef FEATURE_ENCODER_MENU
 byte menu_cmd_alphabet_practice() {
+  Serial.println("menu_cmd_alphabet");
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -7155,7 +7159,7 @@ void menu_mode()
   byte stay_in_menu_mode = 1;
   byte keyer_mode_before = configuration.keyer_mode;
   int step = 0;
-  byte current_submenu = 0;
+  int current_submenu = 0;
   menu_item *current_menu = &menu_l0;
   char line0[16];
   char line1[16];
@@ -7180,21 +7184,17 @@ void menu_mode()
     winkey_breakin_status_byte_inhibit = 1;
   #endif
 
-  debug_serial_port->println(line0);
-
   while (stay_in_menu_mode) {
       if (refresh) {
         strcpy_P(line0, (char *)pgm_read_word(&(menu_labels[current_menu->label_index])));
         lcd_center_print_timed(line0, 0, default_display_msg_delay);
-        debug_serial_port->println(current_menu->submenu[current_submenu]->label_index);
 
-        strcpy_P(line1, (char *)pgm_read_word(&(menu_labels[current_menu->submenu[current_submenu]->label_index])));
+        strcpy_P(line1, (char *)pgm_read_word(&(menu_labels[current_menu->submenu[current_submenu].label_index])));
         lcd_center_print_timed(line1, 1, default_display_msg_delay);
         refresh = false;
       }
       step = chk_rotary_encoder();
       if (step > 0) {
-
         if (current_submenu < current_menu->item_count - 1) {
           current_submenu ++;
         } else {
@@ -7212,21 +7212,23 @@ void menu_mode()
       }
 
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
-        if (current_menu->command != NULL) {
-          ret_code = (current_menu->command)();
+        if (current_menu->submenu[current_submenu].command != NULL) {
+          ret_code = (current_menu->submenu[current_submenu].command)();
           if (ret_code == 1) {
             if (current_menu->previous_menu == NULL){
               stay_in_menu_mode = 0;
             } else {
-              current_menu = current_menu->previous_menu;
+              current_menu = current_menu->previous_menu;          
             }
           }
+        } else {
+          if (current_menu->item_count > 0) {
+            menu_item *new_menu = &current_menu->submenu[current_submenu];
+            new_menu->previous_menu = current_menu;
+            current_menu = new_menu;
+          }
         }
-        if (current_menu->item_count > 0) {
-          menu_item *new_menu = current_menu->submenu[current_submenu];
-          new_menu->previous_menu = current_menu;
-          current_menu = new_menu;
-        }
+
         delay(50);
         while (analogswitchpressed() > 0 ) {}
         refresh = true;
@@ -17239,10 +17241,12 @@ void initialize_menu(){
 
   #ifdef FEATURE_ENCODER_MENU
   
-  menu_l1[0].command = menu_cmd_noop;
+  menu_l1[0].command = NULL;
   //menu_l1[0].previous_menu = &menu_l0;
-  menu_l1[1].command = menu_cmd_back;
+  menu_l1[1].command = NULL;
   //menu_l1[1].previous_menu = &menu_l0;
+  menu_l1[2].command = menu_cmd_noop;
+  menu_l1[3].command = menu_cmd_back;
 
   setting_menu[0].command = menu_cmd_mode;
   //setting_menu[0].previous_menu =&menu_l1[0];
