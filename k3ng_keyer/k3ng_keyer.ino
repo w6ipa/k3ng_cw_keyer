@@ -1011,6 +1011,25 @@ Recent Update History
     2019.04.07.01
       Fixed additional compiler warnings
 
+    2019.04.27.01
+      FEATURE_DISPLAY - fixed issue with cpm label and FunKeyer.  (Thanks, Fred, VK2EFL)
+      Fixed bug introduced in version 2019.02.05.01 with not being able to switch between CLI and Winkey at startup using command button when FEATURE_COMMAND_LINE_INTERFACE and FEATURE_WINKEY_EMULATION both compiled in (Thanks, Dave, G8PGO)
+
+    2019.04.27.02
+      Merge of pull request 59 https://github.com/k3ng/k3ng_cw_keyer/pull/59 - HARDWARE_K5BCQ added.  (Thanks, woodjrx)
+
+    2019.04.27.03
+      Merge of pull request 51 https://github.com/k3ng/k3ng_cw_keyer/pull/51 - Yaacwk dev (Thanks, federicobriata)
+
+    2019.04.27.04
+      Merge of pull request 60 https://github.com/k3ng/k3ng_cw_keyer/pull/60 - Add support for generic PCF8574 based I2C display (Thanks, W6IPA) 
+
+    2019.04.27.05
+      Fixed bug with I2C displays and \+ memory macros with pauses in between prosigned characters (Thanks, Fred, VK2EFL)
+
+    2019.04.28.01
+      Implemented asynchronous EEPROM writes   
+
   This code is currently maintained for and compiled with Arduino 1.8.1.  Your mileage may vary with other versions.
 
   ATTENTION: LIBRARY FILES MUST BE PUT IN LIBRARIES DIRECTORIES AND NOT THE INO SKETCH DIRECTORY !!!!
@@ -1025,7 +1044,7 @@ Recent Update History
 
 */
 
-#define CODE_VERSION "2019.04.07.01"
+#define CODE_VERSION "2019.04.28.01"
 #define eeprom_magic_number 35               // you can change this number to have the unit re-initialize EEPROM
 
 #include <stdio.h>
@@ -1063,6 +1082,8 @@ Recent Update History
   #include "keyer_features_and_options_generic_STM32F103C.h"
 #elif defined(HARDWARE_MORTTY)
   #include "keyer_features_and_options_mortty.h"
+#elif defined(HARDWARE_K5BCQ)
+  #include "keyer_features_and_options_k5bcq.h"
 #elif defined(HARDWARE_TEST_EVERYTHING)
   #include "keyer_features_and_options_test_everything.h"
 #elif defined(HARDWARE_YAACWK)
@@ -1109,6 +1130,9 @@ Recent Update History
 #elif defined(HARDWARE_MORTTY)
   #include "keyer_pin_settings_mortty.h"
   #include "keyer_settings_mortty.h"  
+#elif defined(HARDWARE_K5BCQ)
+  #include "keyer_pin_settings_k5bcq.h"
+  #include "keyer_settings_k5bcq.h"
 #elif defined(HARDWARE_TEST_EVERYTHING)
   #include "keyer_pin_settings_test_everything.h"
   #include "keyer_settings_test_everything.h"
@@ -1187,9 +1211,9 @@ Recent Update History
 
 
 #if defined(FEATURE_USB_KEYBOARD) || defined(FEATURE_USB_MOUSE)  // note_usb_uncomment_lines
-  // #include <hidboot.h>  // Arduino 1.6.x (and maybe 1.5.x) has issues with these three lines, so they are commented out
+  // #include <hidboot.h>  // Arduino 1.6.x (and maybe 1.5.x) has issues with these three lines, moreover we noted that Arduino 1.8.6 it's not afected by an issue during USB Shield SPI init see https://github.com/felis/USB_Host_Shield_2.0/issues/390
   // #include <usbhub.h>   // Uncomment the three lines if you are using FEATURE_USB_KEYBOARD or FEATURE_USB_MOUSE
-  // #include <Usb.h>      // the USB Library can be downloaded at https://github.com/felis/USB_Host_Shield_2.0
+  // #include <Usb.h>      // Note: the most updated USB Library can be downloaded at https://github.com/felis/USB_Host_Shield_2.0
 #endif
 
 #if defined(FEATURE_CW_COMPUTER_KEYBOARD) 
@@ -1582,7 +1606,7 @@ byte send_buffer_status = SERIAL_SEND_BUFFER_NORMAL;
 #endif  
 
 #if defined(FEATURE_LCD_MATHERTEL_PCF8574)
-  LiquidCrystal_PCF8574 lcd(lcd_i2c_address);
+  LiquidCrystal_PCF8574 lcd(lcd_i2c_address_mathertel_PCF8574);
 #endif
 
 #if defined(FEATURE_USB_KEYBOARD) || defined(FEATURE_USB_MOUSE)
@@ -1805,6 +1829,8 @@ unsigned long millis_rollover = 0;
   float c1 = (8.0 - 2.0*pow(omega*T/1000000.0,2))/(4.0+pow(omega*T/1000000.0,2));
 #endif //FEATURE_SINEWAVE_SIDETONE
 
+byte async_eeprom_write = 0;
+
 /*---------------------------------------------------------------------------------------------------------
 
 
@@ -1818,97 +1844,35 @@ unsigned long millis_rollover = 0;
 void setup()
 {
 
-
+  initialize_pins();
+  // initialize_serial_ports();        // Goody - this is available for testing startup issues
+  // initialize_debug_startup();       // Goody - this is available for testing startup issues
+  // debug_blink();                    // Goody - this is available for testing startup issues
+  initialize_keyer_state();
+  initialize_potentiometer();
+  initialize_rotary_encoder();
+  initialize_default_modes();
+  initialize_watchdog();
+  initialize_ethernet_variables();
+  check_eeprom_for_initialization();
+  check_for_beacon_mode();
+  check_for_debug_modes();
+  initialize_analog_button_array();
   initialize_serial_ports();
 
-  debug_blink();
-
-  initialize_debug_startup();
-
-  debug_blink();
-
-  initialize_pins();
-
-  debug_blink();
-
-  // #if defined(FEATURE_SINEWAVE_SIDETONE)
+  // #if defined(FEATURE_SINEWAVE_SIDETONE)  // UNDER DEVELOPMENT
   //   initialize_tonsin();
   // #endif  
-
-  debug_blink();
-
-  initialize_keyer_state();
-
-  debug_blink();
-
-  initialize_potentiometer();
-
-  debug_blink();
-
-  initialize_rotary_encoder();
-
-  debug_blink();
-
-  initialize_default_modes();
-
-  debug_blink();
-
-  initialize_watchdog();
-
-  debug_blink();
-
-  initialize_ethernet_variables();
-
-  debug_blink();
-
-  check_eeprom_for_initialization();
-
-  debug_blink();
-
-  check_for_beacon_mode();
-
-  debug_blink();
-
-  check_for_debug_modes();
-
-  debug_blink();
-
-  initialize_analog_button_array();
-
-  debug_blink();
-
+  
   initialize_ps2_keyboard();
-
-  debug_blink();
-
   initialize_usb();
-
-  debug_blink();
-
   initialize_cw_keyboard();
-
-  debug_blink();
-
   initialize_display();
-
-  debug_blink();
-
   initialize_ethernet();
-
-  debug_blink();
-
   initialize_udp();
-
-  debug_blink();
-
   initialize_web_server();
-
-  debug_blink();
-
   initialize_sd_card();  
-
-  debug_blink();
-
+  initialize_debug_startup();
 
 }
 
@@ -2057,6 +2021,8 @@ void loop()
     #endif  
 
   }
+
+  service_async_eeprom_write();
 
   service_millis_rollover();
 
@@ -3205,7 +3171,8 @@ void check_for_dirty_configuration()
     debug_serial_port->println(F("loop: entering check_for_dirty_configuration"));
   #endif
 
-  if ((config_dirty) && ((millis()-last_config_write)>30000) && (!send_buffer_bytes) && (!ptt_line_activated)) {
+  //if ((config_dirty) && ((millis()-last_config_write)>30000) && (!send_buffer_bytes) && (!ptt_line_activated)) {
+  if ((config_dirty) && ((millis()-last_config_write)>eeprom_write_time_ms) && (!send_buffer_bytes) && (!ptt_line_activated) && (!dit_buffer) && (!dah_buffer) && (!async_eeprom_write) && (paddle_pin_read(paddle_left) == HIGH)  && (paddle_pin_read(paddle_right) == HIGH) ) {
     write_settings_to_eeprom(0);
     last_config_write = millis();
     #ifdef DEBUG_EEPROM
@@ -5542,30 +5509,95 @@ void check_ptt_tail()
 }
 
 //-------------------------------------------------------------------------------------------------------
+//void write_settings_to_eeprom(int initialize_eeprom) {  //zzzzzz
+// 
+//  #if !defined(ARDUINO_SAM_DUE) || (defined(ARDUINO_SAM_DUE) && defined(FEATURE_EEPROM_E24C1024))
+//  
+//  if (initialize_eeprom) {
+//    //configuration.magic_number = eeprom_magic_number;
+//    EEPROM.write(0,eeprom_magic_number);
+//    #ifdef FEATURE_MEMORIES
+//      initialize_eeprom_memories();
+//    #endif  //FEATURE_MEMORIES    
+//  }
+//
+//  const byte* p = (const byte*)(const void*)&configuration;
+//  unsigned int i;
+//  int ee = 1;  // starting point of configuration struct
+//  for (i = 0; i < sizeof(configuration); i++){
+//    EEPROM.write(ee++, *p++);  
+//  }
+//  
+//  #endif //!defined(ARDUINO_SAM_DUE) || (defined(ARDUINO_SAM_DUE) && defined(FEATURE_EEPROM_E24C1024))
+//  
+//  config_dirty = 0;
+//  
+//  
+//}
+
+
 void write_settings_to_eeprom(int initialize_eeprom) {  
  
   #if !defined(ARDUINO_SAM_DUE) || (defined(ARDUINO_SAM_DUE) && defined(FEATURE_EEPROM_E24C1024))
   
-  if (initialize_eeprom) {
-    //configuration.magic_number = eeprom_magic_number;
-    EEPROM.write(0,eeprom_magic_number);
-    #ifdef FEATURE_MEMORIES
-      initialize_eeprom_memories();
-    #endif  //FEATURE_MEMORIES    
-  }
+    if (initialize_eeprom) {
+      //configuration.magic_number = eeprom_magic_number;
+      EEPROM.write(0,eeprom_magic_number);
+      #ifdef FEATURE_MEMORIES
+        initialize_eeprom_memories();
+      #endif  //FEATURE_MEMORIES    
+    }
 
-  const byte* p = (const byte*)(const void*)&configuration;
-  unsigned int i;
-  int ee = 1;  // starting point of configuration struct
-  for (i = 0; i < sizeof(configuration); i++){
-    EEPROM.write(ee++, *p++);  
-  }
+    async_eeprom_write = 1;  // initiate an asyncrhonous eeprom write
   
   #endif //!defined(ARDUINO_SAM_DUE) || (defined(ARDUINO_SAM_DUE) && defined(FEATURE_EEPROM_E24C1024))
-  
+
   config_dirty = 0;
   
-  
+}
+
+//-------------------------------------------------------------------------------------------------------
+
+void service_async_eeprom_write(){
+
+  static byte last_async_eeprom_write_status = 0;
+  static int ee = 0;
+  static unsigned int i = 0;
+  static const byte* p;
+
+//zzzzzz
+
+  if ((async_eeprom_write) && (!send_buffer_bytes) && (!ptt_line_activated) && (!dit_buffer) && (!dah_buffer) && (paddle_pin_read(paddle_left) == HIGH)  && (paddle_pin_read(paddle_right) == HIGH)) {  
+    if (last_async_eeprom_write_status){ // we have an ansynchronous write to eeprom in progress
+
+      EEPROM.write(ee++, *p++);  
+
+      if (i < sizeof(configuration)){
+        #if defined(DEBUG_ASYNC_EEPROM_WRITE)
+          debug_serial_port->print(F("service_async_eeprom_write: write: "));
+          debug_serial_port->println(i);
+        #endif        
+        i++;
+      } else { // we're done
+        async_eeprom_write = 0;
+        last_async_eeprom_write_status = 0;
+        #if defined(DEBUG_ASYNC_EEPROM_WRITE)
+          debug_serial_port->println(F("service_async_eeprom_write: complete"));
+        #endif        
+      }
+
+    } else { // we don't have one in progress - initialize things
+
+      p = (const byte*)(const void*)&configuration;
+      ee = 1;  // starting point of configuration struct
+      i = 0;
+      last_async_eeprom_write_status = 1;
+      #if defined(DEBUG_ASYNC_EEPROM_WRITE)
+        debug_serial_port->println(F("service_async_eeprom_write: init"));
+      #endif
+    }
+  }
+
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -6417,7 +6449,7 @@ void speed_set(int wpm_set){
 
 
     #if defined(OPTION_ADVANCED_SPEED_DISPLAY)
-      lcd_center_print_timed(String(configuration.wpm) + " wpm - " + (configuration.wpm*5) + " cpm ", 0, default_display_msg_delay);
+      lcd_center_print_timed(String(configuration.wpm) + " wpm - " + (configuration.wpm*5) + " cpm", 0, default_display_msg_delay);
       lcd_center_print_timed(String(1200/configuration.wpm) + ":" + (((1200/configuration.wpm)*configuration.dah_to_dit_ratio)/100) + "ms 1:" + (float(configuration.dah_to_dit_ratio)/100.00), 1, default_display_msg_delay);
     #else
       lcd_center_print_timed(String(configuration.wpm) + " wpm", 0, default_display_msg_delay);
@@ -8507,7 +8539,7 @@ void service_dit_dah_buffers()
     debug_serial_port->println(F("loop: entering service_dit_dah_buffers"));
   #endif      
 
-  if (keyer_machine_mode == BEACON){return;} //zzzzzz
+  if (keyer_machine_mode == BEACON){return;}
 
   if (automatic_sending_interruption_time != 0){
     if ((millis() - automatic_sending_interruption_time) > (configuration.paddle_interruption_quiet_time_element_lengths*(1200/configuration.wpm))){
@@ -8962,7 +8994,6 @@ void send_char(byte cw_char, byte omit_letterspace)
 
     #ifdef FEATURE_FARNSWORTH  
     // Farnsworth Timing : http://www.arrl.org/files/file/Technology/x9004008.pdf
-//zzzzzz 
      if (configuration.wpm_farnsworth > configuration.wpm){
        float additional_intercharacter_time_ms = ((( (1.0 * farnsworth_timing_calibration) * ((60.0 * float(configuration.wpm_farnsworth) ) - (37.2 * float(configuration.wpm) ))/( float(configuration.wpm) * float(configuration.wpm_farnsworth) ))/19.0)*1000.0) - (1200.0/ float(configuration.wpm_farnsworth) );
        loop_element_lengths(1,additional_intercharacter_time_ms,0);}
@@ -15335,9 +15366,11 @@ byte play_memory(byte memory_number)
   unsigned int jump_back_to_y = 9999;
   byte jump_back_to_memory_number = 255;
   static byte prosign_flag = 0;
-  play_memory_prempt = 0;
-  byte eeprom_byte_read;  
+  static byte prosign_before_flag = 0;
+  byte eeprom_byte_read = 0;  
   byte pause_sending_buffer_backspace = 0;
+
+  play_memory_prempt = 0;
 
   #if defined(OPTION_PROSIGN_SUPPORT)
     byte eeprom_temp = 0;
@@ -15499,10 +15532,30 @@ byte play_memory(byte memory_number)
                       display_scroll_print_char(prosign_temp[0]);
                       display_scroll_print_char(prosign_temp[1]);                    
                     } else {
-                      display_scroll_print_char(eeprom_byte_read); 
+                      if (prosign_flag){
+                        display_scroll_print_char(eeprom_byte_read); 
+                        display_scroll_print_char(eeprom_byte_read+1);
+                        prosign_before_flag = 1;
+                      } else {
+                        if (prosign_before_flag){  
+                          prosign_before_flag = 0; 
+                        } else {
+                          display_scroll_print_char(eeprom_byte_read);
+                        }
+                      }
                     }
                 #else 
-                  display_scroll_print_char(eeprom_byte_read); 
+                  if (prosign_flag){
+                    display_scroll_print_char(eeprom_byte_read); 
+                    display_scroll_print_char(eeprom_byte_read+1);
+                    prosign_before_flag = 1;
+                  } else {
+                    if (prosign_before_flag){  
+                      prosign_before_flag = 0; 
+                    } else {
+                      display_scroll_print_char(eeprom_byte_read);
+                    }
+                  }
                 #endif
                 service_display();
               }
@@ -15511,7 +15564,7 @@ byte play_memory(byte memory_number)
           }
 
           if (prosign_flag) {
-            send_char(eeprom_byte_read,OMIT_LETTERSPACE);
+            send_char(eeprom_byte_read,OMIT_LETTERSPACE); 
             prosign_flag = 0;
           } else {
             send_char(eeprom_byte_read,KEYER_NORMAL);         // no - play the character

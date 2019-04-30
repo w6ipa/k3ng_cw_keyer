@@ -1,28 +1,7 @@
 // Initial and hardcoded settings
-
-
-// ######## ##     ## ##    ## ##    ## ######## ##    ## ######## ########  
-// ##       ##     ## ###   ## ##   ##  ##        ##  ##  ##       ##     ## 
-// ##       ##     ## ####  ## ##  ##   ##         ####   ##       ##     ## 
-// ######   ##     ## ## ## ## #####    ######      ##    ######   ########  
-// ##       ##     ## ##  #### ##  ##   ##          ##    ##       ##   ##   
-// ##       ##     ## ##   ### ##   ##  ##          ##    ##       ##    ##  
-// ##        #######  ##    ## ##    ## ########    ##    ######## ##     ## 
-
-
-// ######## ##    ##    ##     #####   
-// ##       ##   ##   ####    ##   ##  
-// ##       ##  ##      ##   ##     ## 
-// ######   #####       ##   ##     ## 
-// ##       ##  ##      ##   ##     ## 
-// ##       ##   ##     ##    ##   ##  
-// ##       ##    ##  ######   #####  
-
-
-
 #define initial_speed_wpm 26             // "factory default" keyer speed setting
 #define initial_command_mode_speed_wpm 20 // "factory default" command mode speed setting 
-#define initial_sidetone_freq 600        // "factory default" sidetone frequency setting
+#define initial_sidetone_freq 700        // "factory default" sidetone frequency setting
 #define hz_high_beep 1500                // frequency in hertz of high beep
 #define hz_low_beep 400                  // frequency in hertz of low beep
 #define initial_dah_to_dit_ratio 300     // 300 = 3 / normal 3:1 ratio
@@ -86,7 +65,7 @@
 #define eeprom_write_time_ms 30000
 
 #ifdef FEATURE_COMMAND_BUTTONS
-  #define analog_buttons_number_of_buttons 4
+  #define analog_buttons_number_of_buttons 8  // includes the command button (command button + 3 memory buttons = 4)
   #define analog_buttons_r1 10
   #define analog_buttons_r2 1
 #endif
@@ -198,7 +177,7 @@
 #if defined(FEATURE_ETHERNET)
   // #define FEATURE_ETHERNET_IP {192,168,1,178}                      // default IP address ("192.168.1.178")
   // #define FEATURE_ETHERNET_MAC {0xDE,0xAD,0xBE,0xEF,0xFE,0xED}
-  #define FEATURE_ETHERNET_IP {192,168,1,179}                      // default IP address ("192.168.1.178")
+  #define FEATURE_ETHERNET_IP {192,168,1,179}                      // default IP address ("192.168.1.179")
   #define FEATURE_ETHERNET_MAC {0xDE,0xAD,0xBE,0xEF,0xFE,0xEE}
 
   #define FEATURE_ETHERNET_GATEWAY {192,168,1,1}                   // default gateway
