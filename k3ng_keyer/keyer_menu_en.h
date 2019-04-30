@@ -1,10 +1,9 @@
-#define MAX_MENUS 4
 
 typedef struct menu_item {
   const byte label_index;
   int item_count;
-  menu_item *previous_menu;
-  const menu_item *submenu[MAX_MENUS];
+  struct menu_item *previous_menu;
+  struct menu_item *submenu;
   byte (*command)();
 };
 
