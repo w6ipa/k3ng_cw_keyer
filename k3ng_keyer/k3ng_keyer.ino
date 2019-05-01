@@ -1855,7 +1855,6 @@ void setup()
   check_for_debug_modes();
   initialize_analog_button_array();
   initialize_serial_ports();
-  initialize_menu();
   // #if defined(FEATURE_SINEWAVE_SIDETONE)  // UNDER DEVELOPMENT
   //   initialize_tonsin();
   // #endif  
@@ -7135,10 +7134,16 @@ byte menu_cmd_mode() {
 #endif //FEATURE_ENCODER_MENU
 
 #ifdef FEATURE_ENCODER_MENU
-byte menu_cmd_revert() {
+byte menu_cmd_reverse() {
   if (configuration.paddle_mode == PADDLE_NORMAL) {
     configuration.paddle_mode = PADDLE_REVERSE;
-
+    lcd_center_print_timed("REVERSE", 1, default_display_msg_delay);
+  } else {
+    lcd_center_print_timed("NORMAL", 1, default_display_msg_delay);
+    configuration.paddle_mode = PADDLE_NORMAL;
+  }
+  config_dirty = 1;
+  delay(3000);
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -7185,9 +7190,9 @@ void menu_mode()
 
   while (stay_in_menu_mode) {
       if (refresh) {
-        strcpy_P(line0, (char *)pgm_read_word(&(menu_labels[current_menu->label_index])));
+        strcpy_P(line0, current_menu->label);
         lcd_center_print_timed(line0, 0, default_display_msg_delay);
-        strcpy_P(line1, (char *)pgm_read_word(&(menu_labels[current_menu->submenu[current_submenu].label_index])));
+        strcpy_P(line1, current_menu->submenu[current_submenu].label);
         lcd_center_print_timed(line1, 1, default_display_msg_delay);
         refresh = false;
       }
@@ -7210,17 +7215,23 @@ void menu_mode()
       }
 
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
-        if (current_menu->submenu[current_submenu].command != NULL) {
-          ret_code = (current_menu->submenu[current_submenu].command)();
+        // check if the submenu has a command to execute
+        if (*current_menu->submenu[current_submenu].command != NULL) {
+          // execute command and select what is the next action
+          ret_code = (*current_menu->submenu[current_submenu].command)();
           if (ret_code == 1) {
             if (current_menu->previous_menu == NULL){
+              // reached the top level menu
               stay_in_menu_mode = 0;
             } else {
               current_menu = current_menu->previous_menu;
             }
           }
         } else {
+          // check if the menu has submenus.
           if (current_menu->item_count > 0) {
+            // jump to the selected submenu and record the previous menu.
+            // TODO record the submenu index too
             menu_item *new_menu = &current_menu->submenu[current_submenu];
             new_menu->previous_menu = current_menu;
             current_menu = new_menu;
@@ -17231,27 +17242,7 @@ void initialize_display(){
 
   }
 }
-//--------------------------------------------------------------------- 
 
-void initialize_menu(){
-
-  #ifdef FEATURE_ENCODER_MENU
-  
-  menu_l1[0].command = NULL;
-  menu_l1[1].command = NULL;
-  menu_l1[2].command = menu_cmd_noop;
-  menu_l1[3].command = menu_cmd_back;
-
-  setting_menu[0].command = menu_cmd_mode;
-  setting_menu[1].command = menu_cmd_revert;
-  setting_menu[2].command = menu_cmd_back;
-  
-  training_menu[0].command = menu_cmd_alphabet_practice;
-  training_menu[1].command = menu_cmd_noop;
-  training_menu[2].command = menu_cmd_back;
-
-  #endif // FEATURE_ENCODER_MENU
-}
 //-------------------------------------------------------------------------------------------------------
 #if defined(OPTION_BLINK_HI_ON_PTT) || (defined(OPTION_WINKEY_BLINK_PTT_ON_HOST_OPEN) && defined(FEATURE_WINKEY_EMULATION))
 void blink_ptt_dits_and_dahs(char const * cw_to_send){
