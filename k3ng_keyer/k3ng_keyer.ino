@@ -4711,10 +4711,10 @@ int chk_rotary_encoder(){
     
     unsigned long elapsed_time = (timestamp[4] - timestamp[0]); // Encoder step time difference for 10's step
  
-    if (result == DIR_CW) { 
+    if (result == DIR_CW) {
       if (elapsed_time < 250) {return 2;} else {return 1;};
     }
-    if (result == DIR_CCW) {   
+    if (result == DIR_CCW) {
       if (elapsed_time < 250) {return -2;} else {return -1;};
     }
   }
@@ -4727,7 +4727,6 @@ int chk_rotary_encoder(){
 void check_rotary_encoder(){
 
   int step = chk_rotary_encoder();
-                                       
 
   if (step != 0) {
     speed_change(step);
@@ -7143,6 +7142,15 @@ byte menu_cmd_mode() {
 }
 #endif //FEATURE_ENCODER_MENU
 
+#ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_revert() {
+  if (configuration.paddle_mode == PADDLE_NORMAL) {
+    configuration.paddle_mode = PADDLE_REVERSE;
+
+  return 0;
+}
+#endif //FEATURE_ENCODER_MENU
+
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_ENCODER_MENU
@@ -7179,7 +7187,6 @@ void menu_mode()
   boop_beep();
 
   lcd_clear();
- 
   #if defined(FEATURE_WINKEY_EMULATION) && defined(OPTION_WINKEY_SEND_BREAKIN_STATUS_BYTE)
     winkey_breakin_status_byte_inhibit = 1;
   #endif
@@ -7188,7 +7195,6 @@ void menu_mode()
       if (refresh) {
         strcpy_P(line0, (char *)pgm_read_word(&(menu_labels[current_menu->label_index])));
         lcd_center_print_timed(line0, 0, default_display_msg_delay);
-
         strcpy_P(line1, (char *)pgm_read_word(&(menu_labels[current_menu->submenu[current_submenu].label_index])));
         lcd_center_print_timed(line1, 1, default_display_msg_delay);
         refresh = false;
@@ -7228,7 +7234,6 @@ void menu_mode()
             current_menu = new_menu;
           }
         }
-
         delay(50);
         while (analogswitchpressed() > 0 ) {}
         refresh = true;
@@ -8613,7 +8618,6 @@ void check_encoder_switch() {
 
   byte analogswitchtemp = analogswitchpressed();
   if ((analogswitchtemp > 0) && ((millis() - last_switch_action) > 200)) {
-
     switch_depress_time = millis();
     while ((analogswitchtemp == analogswitchpressed()) && ((millis() - switch_depress_time) < 1000)) {
       // long hold
@@ -17242,23 +17246,17 @@ void initialize_menu(){
   #ifdef FEATURE_ENCODER_MENU
   
   menu_l1[0].command = NULL;
-  //menu_l1[0].previous_menu = &menu_l0;
   menu_l1[1].command = NULL;
-  //menu_l1[1].previous_menu = &menu_l0;
   menu_l1[2].command = menu_cmd_noop;
   menu_l1[3].command = menu_cmd_back;
 
   setting_menu[0].command = menu_cmd_mode;
-  //setting_menu[0].previous_menu =&menu_l1[0];
-  setting_menu[1].command = menu_cmd_back;
-  //setting_menu[1].previous_menu =&menu_l1[0];
+  setting_menu[1].command = menu_cmd_revert;
+  setting_menu[2].command = menu_cmd_back;
   
   training_menu[0].command = menu_cmd_alphabet_practice;
-  //training_menu[0].previous_menu = &menu_l1[0];
   training_menu[1].command = menu_cmd_noop;
-  //training_menu[1].previous_menu = &menu_l1[0];
   training_menu[2].command = menu_cmd_back;
-  //training_menu[2].previous_menu = &menu_l1[0];
 
   #endif // FEATURE_ENCODER_MENU
 }

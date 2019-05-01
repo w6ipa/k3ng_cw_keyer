@@ -24,11 +24,27 @@ const char menu_level_back[] PROGMEM = " ...";
 const char menu_level_001[] PROGMEM = " Mode";
 #define MENU_001 5
 
+const char menu_level_001[] PROGMEM = " Revert Paddles";
+#define MENU_002 6
+
 // menu level 0.1 Training
 const char menu_level_011[] PROGMEM = " Alphabet";
-#define MENU_011 6
+#define MENU_011 7
 const char menu_level_012[] PROGMEM = " 5 Letters Int"; 
-#define MENU_012 7
+#define MENU_012 8
+
+const char *const menu_labels[] PROGMEM = {
+  menu_level_back, // 0
+  menu_level_0,    // 1
+  menu_level_00,   // 2
+  menu_level_01,   // 3
+  menu_level_02,   // 4
+  menu_level_001,  // 5
+  menu_level_002,  // 6
+  menu_level_011,  // 7
+  menu_level_012   // 8
+};
+
 
 const char *const menu_labels[] PROGMEM = {
   menu_level_back, // 0
@@ -42,6 +58,7 @@ const char *const menu_labels[] PROGMEM = {
 };
  menu_item setting_menu[2] = {
     {MENU_001, 0, NULL, NULL, NULL},
+    {MENU_002, 0, NULL, NULL, NULL},
     {MENU_BACK, 0, NULL, NULL, NULL}
   };
 
