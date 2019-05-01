@@ -7143,10 +7143,16 @@ byte menu_cmd_mode() {
 #endif //FEATURE_ENCODER_MENU
 
 #ifdef FEATURE_ENCODER_MENU
-byte menu_cmd_revert() {
+byte menu_cmd_reverse() {
   if (configuration.paddle_mode == PADDLE_NORMAL) {
     configuration.paddle_mode = PADDLE_REVERSE;
-
+    lcd_center_print_timed("REVERSE", 1, default_display_msg_delay);
+  } else {
+    lcd_center_print_timed("NORMAL", 1, default_display_msg_delay);
+    configuration.paddle_mode = PADDLE_NORMAL;
+  }
+  config_dirty = 1;
+  delay(3000);
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -17251,7 +17257,7 @@ void initialize_menu(){
   menu_l1[3].command = menu_cmd_back;
 
   setting_menu[0].command = menu_cmd_mode;
-  setting_menu[1].command = menu_cmd_revert;
+  setting_menu[1].command = menu_cmd_reverse;
   setting_menu[2].command = menu_cmd_back;
   
   training_menu[0].command = menu_cmd_alphabet_practice;
