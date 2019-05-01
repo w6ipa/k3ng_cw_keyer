@@ -1860,7 +1860,6 @@ void setup()
   check_for_debug_modes();
   initialize_analog_button_array();
   initialize_serial_ports();
-  initialize_menu();
   // #if defined(FEATURE_SINEWAVE_SIDETONE)  // UNDER DEVELOPMENT
   //   initialize_tonsin();
   // #endif  
@@ -7224,8 +7223,8 @@ void menu_mode()
       }
 
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
-        if (current_menu->submenu[current_submenu].command != NULL) {
-          ret_code = (current_menu->submenu[current_submenu].command)();
+        if (*current_menu->submenu[current_submenu].command != NULL) {
+          ret_code = (*current_menu->submenu[current_submenu].command)();
           if (ret_code == 1) {
             if (current_menu->previous_menu == NULL){
               stay_in_menu_mode = 0;
@@ -17244,27 +17243,6 @@ void initialize_display(){
     #endif
 
   }
-}
-//--------------------------------------------------------------------- 
-
-void initialize_menu(){
-
-  #ifdef FEATURE_ENCODER_MENU
-  
-  menu_l1[0].command = NULL;
-  menu_l1[1].command = NULL;
-  menu_l1[2].command = menu_cmd_noop;
-  menu_l1[3].command = menu_cmd_back;
-
-  setting_menu[0].command = menu_cmd_mode;
-  setting_menu[1].command = menu_cmd_reverse;
-  setting_menu[2].command = menu_cmd_back;
-  
-  training_menu[0].command = menu_cmd_alphabet_practice;
-  training_menu[1].command = menu_cmd_noop;
-  training_menu[2].command = menu_cmd_back;
-
-  #endif // FEATURE_ENCODER_MENU
 }
 //-------------------------------------------------------------------------------------------------------
 #if defined(OPTION_BLINK_HI_ON_PTT) || (defined(OPTION_WINKEY_BLINK_PTT_ON_HOST_OPEN) && defined(FEATURE_WINKEY_EMULATION))

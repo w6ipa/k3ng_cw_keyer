@@ -45,24 +45,30 @@ const char *const menu_labels[] PROGMEM = {
   menu_level_012   // 8
 };
 
+byte menu_cmd_back();
+byte menu_cmd_mode();
+byte menu_cmd_reverse();
+byte menu_cmd_noop();
+byte menu_cmd_alphabet_practice();
+
  menu_item setting_menu[3] = {
-    {MENU_001, 0, NULL, NULL, NULL},
-    {MENU_002, 0, NULL, NULL, NULL},
-    {MENU_BACK, 0, NULL, NULL, NULL}
+    {MENU_001, 0, NULL, NULL, menu_cmd_mode},
+    {MENU_002, 0, NULL, NULL, menu_cmd_reverse},
+    {MENU_BACK, 0, NULL, NULL, menu_cmd_back}
   };
 
   menu_item training_menu[3] = {
-    {MENU_011, 0, NULL, NULL, NULL},
-    {MENU_012, 0, NULL, NULL, NULL},
-    {MENU_BACK, 0, NULL, NULL, NULL}
+    {MENU_011, 0, NULL, NULL, menu_cmd_alphabet_practice},
+    {MENU_012, 0, NULL, NULL, menu_cmd_noop},
+    {MENU_BACK, 0, NULL, NULL, menu_cmd_back}
   };
 
 
   menu_item menu_l1[4] = {
     {MENU_00, 3, NULL, setting_menu, NULL},
     {MENU_01, 3, NULL, training_menu, NULL},
-    {MENU_02, 0, NULL, NULL, NULL},
-    {MENU_BACK, 0, NULL, NULL, NULL}
+    {MENU_02, 0, NULL, NULL, menu_cmd_noop},
+    {MENU_BACK, 0, NULL, NULL, menu_cmd_back}
   };
 
   menu_item menu_l0 = {
