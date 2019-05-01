@@ -7198,9 +7198,9 @@ void menu_mode()
 
   while (stay_in_menu_mode) {
       if (refresh) {
-        strcpy_P(line0, (char *)pgm_read_word(&(menu_labels[current_menu->label_index])));
+        strcpy_P(line0, current_menu->label);
         lcd_center_print_timed(line0, 0, default_display_msg_delay);
-        strcpy_P(line1, (char *)pgm_read_word(&(menu_labels[current_menu->submenu[current_submenu].label_index])));
+        strcpy_P(line1, current_menu->submenu[current_submenu].label);
         lcd_center_print_timed(line1, 1, default_display_msg_delay);
         refresh = false;
       }
@@ -7223,17 +7223,23 @@ void menu_mode()
       }
 
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
+        // check if the submenu has a command to execute
         if (*current_menu->submenu[current_submenu].command != NULL) {
+          // execute command and select what is the next action
           ret_code = (*current_menu->submenu[current_submenu].command)();
           if (ret_code == 1) {
             if (current_menu->previous_menu == NULL){
+              // reached the top level menu
               stay_in_menu_mode = 0;
             } else {
               current_menu = current_menu->previous_menu;          
             }
           }
         } else {
+          // check if the the menu has submenus.
           if (current_menu->item_count > 0) {
+            // jump to the selected submenu and record the previous menu.
+            // TODO record the submenu index too.
             menu_item *new_menu = &current_menu->submenu[current_submenu];
             new_menu->previous_menu = current_menu;
             current_menu = new_menu;
