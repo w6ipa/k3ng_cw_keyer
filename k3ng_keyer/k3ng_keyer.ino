@@ -7113,14 +7113,32 @@ void command_mode()
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_ENCODER_MENU
-byte menu_cmd_back() {
+byte menu_cmd_practice_rcvtrans(long p) {
+  practice_non_interactive(p, menu_end_practice);
+  return 1;
+}
+#endif //FEATURE_ENCODER_MENU
+
+//-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_practice_receive(long p) {
+  practice_non_interactive(p, menu_end_practice);
+  return 1;
+}
+#endif //FEATURE_ENCODER_MENU
+
+//-------------------------------------------------------------------------------------------------------
+
+#ifdef FEATURE_ENCODER_MENU
+byte menu_cmd_back(long p) {
   return 1;
 }
 #endif //FEATURE_ENCODER_MENU
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_ENCODER_MENU
-byte menu_cmd_noop() {
+byte menu_cmd_noop(long p) {
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -7128,13 +7146,13 @@ byte menu_cmd_noop() {
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_ENCODER_MENU
-byte menu_cmd_mode() {
+byte menu_cmd_mode(long p) {
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
 
 #ifdef FEATURE_ENCODER_MENU
-byte menu_cmd_reverse() {
+byte menu_cmd_reverse(long p) {
   if (configuration.paddle_mode == PADDLE_NORMAL) {
     configuration.paddle_mode = PADDLE_REVERSE;
     lcd_center_print_timed("REVERSE", 1, default_display_msg_delay);
@@ -7151,7 +7169,15 @@ byte menu_cmd_reverse() {
 //-------------------------------------------------------------------------------------------------------
 
 #ifdef FEATURE_ENCODER_MENU
-byte menu_cmd_alphabet_practice() {
+int menu_end_practice() {
+  int finished = 0;
+  while ((paddle_pin_read(paddle_left) == LOW) || (paddle_pin_read(paddle_right) == LOW)) {
+    finished = 1;
+  }
+  return finished;
+}
+
+byte menu_cmd_alphabet_practice(long p) {
   return 0;
 }
 #endif //FEATURE_ENCODER_MENU
@@ -7165,6 +7191,7 @@ void menu_mode()
   int step = 0;
   int current_submenu = 0;
   menu_item *current_menu = &menu_l0;
+  menu_item *submenu;
   char line0[16];
   char line1[16];
   bool refresh = true;
@@ -7216,9 +7243,10 @@ void menu_mode()
 
       if (analogswitchpressed() == 1 ){  // did the switch got pressed
         // check if the submenu has a command to execute
-        if (*current_menu->submenu[current_submenu].command != NULL) {
+        submenu = &current_menu->submenu[current_submenu];
+        if (*submenu->command != NULL) {
           // execute command and select what is the next action
-          ret_code = (*current_menu->submenu[current_submenu].command)();
+          ret_code = (*submenu->command)(submenu->parameter);
           if (ret_code == 1) {
             if (current_menu->previous_menu == NULL){
               // reached the top level menu
@@ -14518,6 +14546,99 @@ void serial_practice_interactive(PRIMARY_SERIAL_CLS * port_to_use,byte practice_
 
 }
 #endif //defined(FEATURE_SERIAL) && defined(FEATURE_TRAINING_COMMAND_LINE_INTERFACE) && defined(FEATURE_COMMAND_LINE_INTERFACE)
+
+//---------------------------------------------------------------------
+
+void practice_non_interactive(byte practice_type_called, int (*finish)())
+{
+
+  byte loop1 = 1;
+  byte loop2;
+  byte x;
+  String cw_to_send_to_user(10);
+  char incoming_char = ' ';
+  byte practice_type;
+  char word_buffer[10];
+
+  key_tx = 0;
+  randomSeed(millis());
+
+  while (loop1){
+
+    if (practice_type_called == PRACTICE_MIXED){
+      practice_type = random(PRACTICE_2_CHAR_WORDS,PRACTICE_QSO_WORDS+1);
+    } else {
+      practice_type = practice_type_called;
+    }
+
+    switch(practice_type){
+      case CALLSIGN_INTERNATIONAL:
+      case CALLSIGN_US:
+      case CALLSIGN_EUROPEAN:
+      case CALLSIGN_CANADA:  
+        cw_to_send_to_user = generate_callsign(practice_type);
+        break;
+      case PRACTICE_2_CHAR_WORDS: 
+        strcpy_P(word_buffer, (char*)pgm_read_word(&(s2_table[random(0,s2_size)])));
+        cw_to_send_to_user = word_buffer;
+        #ifdef DEBUG_PRACTICE
+          debug_serial_port->print("practice_non_interactive: PRACTICE_2_CHAR_WORDS:");
+        #endif
+        break;
+      case PRACTICE_3_CHAR_WORDS:
+        strcpy_P(word_buffer, (char*)pgm_read_word(&(s3_table[random(0,s3_size)])));
+        cw_to_send_to_user = word_buffer;
+        #ifdef DEBUG_PRACTICE
+          debug_serial_port->print("practice_non_interactive: PRACTICE_3_CHAR_WORDS:");
+        #endif        
+        break;
+      case PRACTICE_4_CHAR_WORDS: 
+        strcpy_P(word_buffer, (char*)pgm_read_word(&(s4_table[random(0,s4_size)])));
+        cw_to_send_to_user = word_buffer;
+        #ifdef DEBUG_PRACTICE
+          debug_serial_port->print("practice_non_interactive: PRACTICE_4_CHAR_WORDS:");
+        #endif        
+        break;    
+      case PRACTICE_NAMES: 
+        strcpy_P(word_buffer, (char*)pgm_read_word(&(name_table[random(0,name_size)])));
+        cw_to_send_to_user = word_buffer;
+        #ifdef DEBUG_PRACTICE
+          debug_serial_port->print("practice_non_interactive: PRACTICE_NAMES:");
+        #endif        
+        break; 
+      case PRACTICE_QSO_WORDS: 
+        strcpy_P(word_buffer, (char*)pgm_read_word(&(qso_table[random(0,qso_size)])));
+        cw_to_send_to_user = word_buffer;
+        #ifdef DEBUG_PRACTICE
+          debug_serial_port->print("practice_non_interactive: PRACTICE_QSO_WORDS:");
+        #endif        
+        break; 
+    } //switch(practice_type)
+
+
+    cw_to_send_to_user = cw_to_send_to_user + "    ";
+
+
+    loop2 = 1;
+    x = 0;
+
+    while ((loop2) && (x < (cw_to_send_to_user.length()))) {
+
+      send_char(cw_to_send_to_user[x],KEYER_NORMAL);
+      #ifdef FEATURE_DISPLAY
+        display_scroll_print_char(cw_to_send_to_user[x]);
+        service_display();
+      #endif  
+      x++;
+    
+      if ((*finish)()) {
+          loop1 = 0;
+          loop2 = 0;
+          x = 99;
+      }    
+    } //loop2
+  } //loop1
+}
 
 //---------------------------------------------------------------------
 
