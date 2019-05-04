@@ -16974,10 +16974,6 @@ void initialize_display(){
       lcd.setBacklight(HIGH);
     #endif
     #ifdef FEATURE_LCD_MATHERTEL_PCF8574 
-      #if (ARDUINO > 10507) && defined(WIRECLOCK)
-        // equivalent to setting TWI_FREQ.
-        Wire.setClock(WIRECLOCK);
-      #endif
       lcd.setBacklight(HIGH);
     #endif
 
