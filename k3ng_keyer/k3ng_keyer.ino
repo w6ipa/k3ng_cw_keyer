@@ -1030,6 +1030,19 @@ Recent Update History
     2019.04.28.01
       Implemented asynchronous EEPROM writes   
 
+    2019.04.29.01
+      Fixed bug introduced in 2019.04.27.05 with display of second prosign character (Thanks, Fred, VK2EFL)
+
+    2019.05.03.01
+      Merged pull request https://github.com/k3ng/k3ng_cw_keyer/pull/61  (Thanks, W6IPA) 
+      Merged pull request https://github.com/k3ng/k3ng_cw_keyer/pull/62  (Thanks, W6IPA) 
+      Merged pull request https://github.com/k3ng/k3ng_cw_keyer/pull/63  (Thanks, W6IPA) 
+      New hardware profile: HARDWARE_MEGAKEYER  https://github.com/w6ipa/megakeyer    (Thanks, W6IPA)
+
+    2019.05.03.02
+      Added potentiometer_enable_pin
+      Merged pull request https://github.com/k3ng/k3ng_cw_keyer/pull/64  (Thanks, W6IPA)
+
   This code is currently maintained for and compiled with Arduino 1.8.1.  Your mileage may vary with other versions.
 
   ATTENTION: LIBRARY FILES MUST BE PUT IN LIBRARIES DIRECTORIES AND NOT THE INO SKETCH DIRECTORY !!!!
@@ -1044,7 +1057,7 @@ Recent Update History
 
 */
 
-#define CODE_VERSION "2019.04.28.01"
+#define CODE_VERSION "2019.05.03.02"
 #define eeprom_magic_number 35               // you can change this number to have the unit re-initialize EEPROM
 
 #include <stdio.h>
@@ -1195,7 +1208,7 @@ Recent Update History
 #if defined(FEATURE_LCD_HD44780)
   #include <Wire.h>
   #include <hd44780.h>
-  #include <hd44780ioClass/hd44780_I2Cexp.h> // include i/o class header
+  #include <hd44780ioClass/hd44780_I2Cexp.h>
   #define WIRECLOCK 400000L
 #endif
 
@@ -2022,13 +2035,11 @@ void loop()
       check_sequencer_tail_time();
     #endif  
 
+    service_async_eeprom_write();
+    
   }
 
-  service_async_eeprom_write();
-
   service_millis_rollover();
-
-
 
   
 }
@@ -4696,15 +4707,14 @@ void debug_capture_dump()
 
 //-------------------------------------------------------------------------------------------------------
 #ifdef FEATURE_ROTARY_ENCODER
-void check_rotary_encoder(){
+int chk_rotary_encoder(){
 
   static unsigned long timestamp[5];
 
   unsigned char pinstate = (digitalRead(rotary_pin2) << 1) | digitalRead(rotary_pin1);
   state = ttable[state & 0xf][pinstate];
   unsigned char result = (state & 0x30);
-      
-  if (result) {                                    // If rotary encoder modified  
+  if (result) {
     timestamp[0] = timestamp[1];                    // Encoder step timer
     timestamp[1] = timestamp[2]; 
     timestamp[2] = timestamp[3]; 
@@ -4713,13 +4723,23 @@ void check_rotary_encoder(){
     
     unsigned long elapsed_time = (timestamp[4] - timestamp[0]); // Encoder step time difference for 10's step
  
-    if (result == DIR_CW) {                      
-      if (elapsed_time < 250) {speed_change(2);} else {speed_change(1);};
+    if (result == DIR_CW) {
+      if (elapsed_time < 250) {return 2;} else {return 1;};
     }
-    if (result == DIR_CCW) {                      
-      if (elapsed_time < 250) {speed_change(-2);} else {speed_change(-1);};
+    if (result == DIR_CCW) {
+      if (elapsed_time < 250) {return -2;} else {return -1;};
     }
-    
+  }
+  return 0;
+}
+
+void check_rotary_encoder(){
+
+  int step = chk_rotary_encoder();
+
+  if (step != 0) {
+    speed_change(step);
+     
     // Start of Winkey Speed change mod for Rotary Encoder -- VE2EVN
     #ifdef FEATURE_WINKEY_EMULATION
       if ((primary_serial_port_mode == SERIAL_WINKEY_EMULATION) && (winkey_host_open)) {
@@ -4729,9 +4749,7 @@ void check_rotary_encoder(){
     #endif    
     // End of Winkey Speed change mod for Rotary Encoder -- VE2EVN
 
-  } // if (result)
-
-  
+  } // if (step != 0)
   
 }
 #endif //FEATURE_ROTARY_ENCODER
@@ -4789,8 +4807,12 @@ void check_potentiometer()
   #endif
 
   static unsigned long last_pot_check_time = 0;
-    
+  
   if ((configuration.pot_activated || potentiometer_always_on) && ((millis() - last_pot_check_time) > potentiometer_check_interval_ms)) {
+    last_pot_check_time = millis();
+    if ((potentiometer_enable_pin) && (digitalRead(potentiometer_enable_pin) == HIGH)){
+      return; 
+    }
     byte pot_value_wpm_read = pot_value_wpm();
     if (((abs(pot_value_wpm_read - last_pot_wpm_read) * 10) > (potentiometer_change_threshold * 10))) {
       #ifdef DEBUG_POTENTIOMETER
@@ -4811,7 +4833,6 @@ void check_potentiometer()
         last_activity_time = millis(); 
       #endif //FEATURE_SLEEP
     }
-    last_pot_check_time = millis();
   }
 }
 
@@ -15417,7 +15438,7 @@ byte play_memory(byte memory_number)
                     } else {
                       if (prosign_flag){
                         display_scroll_print_char(eeprom_byte_read); 
-                        display_scroll_print_char(eeprom_byte_read+1);
+                        display_scroll_print_char(EEPROM.read(y+1));
                         prosign_before_flag = 1;
                       } else {
                         if (prosign_before_flag){  
@@ -15430,7 +15451,7 @@ byte play_memory(byte memory_number)
                 #else 
                   if (prosign_flag){
                     display_scroll_print_char(eeprom_byte_read); 
-                    display_scroll_print_char(eeprom_byte_read+1);
+                    display_scroll_print_char(EEPROM.read(y+1));
                     prosign_before_flag = 1;
                   } else {
                     if (prosign_before_flag){  
@@ -15836,7 +15857,7 @@ byte play_memory(byte memory_number)
     */
       
 
-  }
+  } //for (int y = (memory_start(memory_number)); (y < (memory_end(memory_number)+1)); y++)
 
 }
 #endif
@@ -16268,6 +16289,10 @@ void initialize_pins() {
 
   if (tx_pause_pin){
     pinMode(tx_pause_pin,INPUT_PULLUP);
+  }
+
+  if (potentiometer_enable_pin){
+    pinMode(potentiometer_enable_pin,INPUT_PULLUP);
   }
   
 } //initialize_pins()
