@@ -1105,6 +1105,8 @@ Recent Update History
   #include "keyer_features_and_options_yaacwk.h"
 #elif defined(HARDWARE_TEST)
   #include "keyer_features_and_options_test.h"
+#elif defined(HARDWARE_USBKEYER)
+  #include "keyer_features_and_options_usbkeyer.h"
 #else
   #include "keyer_features_and_options.h"
 #endif
@@ -1158,6 +1160,9 @@ Recent Update History
 #elif defined(HARDWARE_TEST)
   #include "keyer_pin_settings_test.h"
   #include "keyer_settings_test.h"
+#elif defined(HARDWARE_USBKEYER)
+  #include "keyer_pin_settings_usbkeyer.h"
+  #include "keyer_settings_usbkeyer.h"
 #else
   #include "keyer_pin_settings.h"
   #include "keyer_settings.h"

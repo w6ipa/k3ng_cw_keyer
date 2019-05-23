@@ -22,6 +22,7 @@
 // #define HARDWARE_MEGAKEYER // https://github.com/w6ipa/megakeyer
 // #define HARDWARE_TEST_EVERYTHING
 // #define HARDWARE_TEST
+#define HARDWARE_USBKEYER
 
 
 /* 
