@@ -2,7 +2,7 @@
 //       Initial setting for W6IPA megakeyer v1.1 (CC) BY-NC-SA
 //       Project files are available here https://github.com/w6ipa/megakeyer
 //
-#define initial_speed_wpm 20             // "factory default" keyer speed setting
+#define initial_speed_wpm 25             // "factory default" keyer speed setting
 #define initial_command_mode_speed_wpm 20 // "factory default" command mode speed setting 
 #define initial_sidetone_freq 600        // "factory default" sidetone frequency setting
 #define hz_high_beep 1500                // frequency in hertz of high beep
@@ -271,4 +271,3 @@
 
 #define sidetone_volume_low_limit 10
 #define sidetone_volume_high_limit 500
-

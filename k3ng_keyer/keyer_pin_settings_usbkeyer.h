@@ -4,8 +4,8 @@
 
 #define paddle_left 16
 #define paddle_right 10
-#define tx_key_line_1 46       // (high = key down/tx on)
-#define tx_key_line_2 12
+#define tx_key_line_1 4       // (high = key down/tx on)
+#define tx_key_line_2 0
 #define tx_key_line_3 0
 #define tx_key_line_4 0
 #define tx_key_line_5 0
@@ -24,8 +24,8 @@
 #define potentiometer_enable_pin 0  // if defined, the potentiometer will be enabled only when this pin is held low; set to 0 to ignore this pin
 
 #ifdef FEATURE_COMMAND_BUTTONS
-  #define analog_buttons_pin A1
-  #define command_mode_active_led 0
+  #define analog_buttons_pin A0
+  #define command_mode_active_led 14
 #endif //FEATURE_COMMAND_BUTTONS
 
 /*
